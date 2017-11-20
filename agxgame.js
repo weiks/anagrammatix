@@ -93,7 +93,7 @@ function hostStartGame(gameId) {
  */
 function hostNextRound(data) {
     // if(data.round < wordPool.length ){
-    if(data.round < 1 ){
+    if(data.round < 5 ){
         // Send a new set of words back to the host and players.
         sendWord(data.round, data.gameId);
     } else {
@@ -101,15 +101,15 @@ function hostNextRound(data) {
       if(!data.done)
       {
         //updating players win count
-        db.all("SELECT * FROM player WHERE player_name=?",data.winner, function(err, rows) {
-        rows.forEach(function (row) {
-            win=row.player_win;
-            win++;
-            console.log(win);
-            db.run("UPDATE player SET player_win = ? WHERE player_name = ?", win, data.winner);
-            console.log(row.player_name, row.player_win);
-        })
-        });
+        // db.all("SELECT * FROM player WHERE player_name=?",data.winner, function(err, rows) {
+        // rows.forEach(function (row) {
+        //     win=row.player_win;
+        //     win++;
+        //     console.log(win);
+        //     db.run("UPDATE player SET player_win = ? WHERE player_name = ?", win, data.winner);
+        //     console.log(row.player_name, row.player_win);
+        // })
+        // });
         data.done++;
       }
         // If the current round exceeds the number of words, send the 'gameOver' event.
@@ -150,23 +150,23 @@ function findLeader()
     var sock=this;
     var i=0;
     leader={};
-    db.all("SELECT * FROM player ORDER BY player_win DESC LIMIT 10",function(err,rows)
-    {
-      if(rows!=undefined)
-      {
-        rows.forEach(function (row)
-        {
-          leader[i]={};
-          leader[i]['name']=row.player_name;
-          leader[i]['win']=row.player_win;
-          console.log(row.player_name);
-          console.log(row.player_win);
-          i++;
-        })
-      }
-      console.log("found leader");
-      sock.emit('showLeader',leader);
-    });
+    // db.all("SELECT * FROM player ORDER BY player_win DESC LIMIT 10",function(err,rows)
+    // {
+    //   if(rows!=undefined)
+    //   {
+    //     rows.forEach(function (row)
+    //     {
+    //       leader[i]={};
+    //       leader[i]['name']=row.player_name;
+    //       leader[i]['win']=row.player_win;
+    //       console.log(row.player_name);
+    //       console.log(row.player_win);
+    //       i++;
+    //     })
+    //   }
+    //   console.log("found leader");
+    //   sock.emit('showLeader',leader);
+    // });
 
 }
 /* *****************************
@@ -197,18 +197,18 @@ function    playerJoinGame(data) {
 
         // Join the room
         sock.join(data.gameId);
-        db.serialize(function()
-            {
-                var stmt = " SELECT * FROM player WHERE player_name='"+data.playerName+"';";
-                db.get(stmt, function(err, row){
-                    if(err) throw err;
-                    if(typeof row == "undefined") {
-                            db.prepare("INSERT INTO player (player_name,player_win) VALUES(?,?)").run(data.playerName,0).finalize();
-                    } else {
-                        console.log("row is: ", row);
-                    }
-                });
-            });
+        // db.serialize(function()
+        //     {
+        //         var stmt = " SELECT * FROM player WHERE player_name='"+data.playerName+"';";
+        //         db.get(stmt, function(err, row){
+        //             if(err) throw err;
+        //             if(typeof row == "undefined") {
+        //                     db.prepare("INSERT INTO player (player_name,player_win) VALUES(?,?)").run(data.playerName,0).finalize();
+        //             } else {
+        //                 console.log("row is: ", row);
+        //             }
+        //         });
+        //     });
         //console.log('Player ' + data.playerName + ' joining game: ' + data.gameId );
 
         // Emit an event notifying the clients that the player has joined the room.

@@ -13,7 +13,7 @@
     "node-quarters": "0.0.1",
     "serve-favicon": "^2.4.5",
     "socket.io": "0.9",
-    "sqlite3": "^3.1.4"
+    "sqlite3": "^3.1.13"
   },
   "main": "index.js",
   "devDependencies": {},
