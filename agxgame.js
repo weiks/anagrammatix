@@ -1,12 +1,23 @@
 var io;
 var gameSocket;
 var db;
+
+var Quarters = require('node-quarters')
+
+var config = require('./config')
+
+// get quarters instance
+var quarters = new Quarters(config.quarters)
 /**
  * This function is called by index.js to initialize a new game instance.
  *
  * @param sio The Socket.IO library
  * @param socket The socket object for the connected client.
  */
+
+var gameData = []
+
+
 exports.initGame = function(sio, socket,sdb){
     io = sio;
     gameSocket = socket;
@@ -21,6 +32,7 @@ exports.initGame = function(sio, socket,sdb){
     gameSocket.on('hostRoomFull', hostPrepareGame);
     gameSocket.on('hostCountdownFinished', hostStartGame);
     gameSocket.on('hostNextRound', hostNextRound);
+    gameSocket.on('clientEndGame', clientEndGame)
 
     // Player Events
     gameSocket.on('playerJoinGame', playerJoinGame);
@@ -34,18 +46,22 @@ exports.initGame = function(sio, socket,sdb){
    *                             *
    ******************************* */
 
+// logged in users
+
 /**
  * The 'START' button was clicked and 'hostCreateNewGame' event occurred.
  */
+
 function hostCreateNewGame() {
     // Create a unique Socket.IO Room
-    var thisGameId = ( Math.random() * 100000 ) | 0;
+    var thisGameId = ( Math.random() * 10000 ) | 0;
 
     // Return the Room ID (gameId) and the socket ID (mySocketId) to the browser client
     this.emit('newGameCreated', {gameId: thisGameId, mySocketId: this.id});
 
     // Join the Room and wait for the players
     this.join(thisGameId.toString());
+    gameData.push(thisGameId)
 };
 
 /*
@@ -76,7 +92,8 @@ function hostStartGame(gameId) {
  * @param data Sent from the client. Contains the current round and gameId (room)
  */
 function hostNextRound(data) {
-    if(data.round < wordPool.length ){
+    // if(data.round < wordPool.length ){
+    if(data.round < 1 ){
         // Send a new set of words back to the host and players.
         sendWord(data.round, data.gameId);
     } else {
@@ -96,7 +113,33 @@ function hostNextRound(data) {
         data.done++;
       }
         // If the current round exceeds the number of words, send the 'gameOver' event.
+
       io.sockets.in(data.gameId).emit('gameOver',data);
+      // call server to send Quarters to the winner
+      
+    }
+}
+
+function clientEndGame(data) {
+    // find winner of the current game
+    winner = data.players.filter(item => (data.winner == item.playerName))
+    // remove game from active games to ensure only one winner
+    var active = gameData.length
+    gameData = gameData.filter(item => (data.gameId !== item))    
+    console.log(winner,gameData)
+    if (winner[0].id && (active>gameData.length))  {  
+    // ie, there was indeed an active game and a winner with an address
+    quarters.transferQuarters({
+                        user: winner[0].id,
+                        amount: 180
+                    }).then((res) => { 
+                        console.log(res) 
+                        this.emit('showWinner',res.txId)
+                    }).catch((e) => {
+                        console.log(e)
+                        this.emit('error',e)
+                    })
+    
     }
 }
 
@@ -138,12 +181,12 @@ function findLeader()
  * the gameId entered by the player.
  * @param data Contains data entered via player's input - playerName and gameId.
  */
-function playerJoinGame(data) {
+function    playerJoinGame(data) {
     //console.log('Player ' + data.playerName + 'attempting to join game: ' + data.gameId );
 
     // A reference to the player's Socket.IO socket object
     var sock = this;
-
+    console.log(data)
     // Look up the room ID in the Socket.IO manager object.
     var room = gameSocket.manager.rooms["/" + data.gameId];
 
@@ -333,4 +376,4 @@ var wordPool = [
         "words"  : [ "stone","tones","steno","onset" ],
         "decoys" : [ "snout","tongs","stent","tense","terns","santo","stony","toons","snort","stint" ]
     }
-]
+]   

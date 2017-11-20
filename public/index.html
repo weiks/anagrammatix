@@ -73,7 +73,8 @@
                 <button id="btnStart" class="btn">Start</button>
                 <div id="playerWaitingMessage"></div>
             </div>
-        </div>
+          <div>         
+     </div>
     </script>
 
     <!-- This is the 'Host' screen. It displays the word for each player to match -->
@@ -90,16 +91,29 @@
             </div>
         </div>
     </script>
-
+          <div ><button style="display: none;"
+  class="buy-quarters-button"
+  data-widget-type="button"
+  data-order-name=""
+  data-order-description=""
+  data-order-code=""
+  data-amount="100"
+  data-button-size="medium"
+  data-button-type="black">
+  Play with quarters
+</button></div>   
 
     <script id="leaderboard-template" type="text/template">
         <div id="banner">Leader Board</div>
         <hr>
       </script>
+
     <!-- JavaScript Libraries -->
 
     <!-- jQuery! -->
-    <script src="libs/jquery-2.0.2.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+
+    <!--  <script src="libs/jquery-2.0.2.min.js"></script>
 
     <!-- TextFit resizes text to fill a container.
         It's used so the titles and game words fit properly on any size screen.
@@ -115,7 +129,12 @@
     <script src="/socket.io/socket.io.js"></script>
 
     <!-- app.js is where all the client-side Anagrammatix game logic -->
+  <script src="/libs/quarters.min.js" charset="utf-8"></script>
+  <script src="https://dev.pocketfulofquarters.com/embeds/button.js"
+    data-script-name="quarters-embeds"
+    data-app-id="Lpk5sPrA7P59HFlN7obS"
+    data-app-key="1s4x2v8h3b9ollw1pt2afj8knheamvmvv"
+    charset="utf-8"></script>
     <script src="app.js"></script>
-
 </body>
 </html>

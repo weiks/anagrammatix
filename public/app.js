@@ -7,6 +7,18 @@ jQuery(function($){
      *
      * @type {{init: Function, bindEvents: Function, onConnected: Function, onNewGameCreated: Function, playerJoinedRoom: Function, beginNewGame: Function, onNewWordData: Function, hostCheckAnswer: Function, gameOver: Function, error: Function}}
      */
+    var quarterOptions = {
+        appKey: 'Lpk5sPrA7P59HFlN7obS',
+        appSecret: '1s4x2v8h3b9ollw1pt2afj8knheamvmvv',
+        // quartersURL: 'http://localhost:3000',
+        // apiURL: 'http://localhost:8888/v1/'
+        quartersURL: 'https://dev.pocketfulofquarters.com',
+        apiURL: 'https://api.dev.pocketfulofquarters.com/v1/'
+    }
+
+// quarters object
+var quarters = new Quarters(quarterOptions)
+
     var IO = {
 
         /**
@@ -32,6 +44,7 @@ jQuery(function($){
             IO.socket.on('gameOver', IO.gameOver);
             IO.socket.on('error', IO.error );
             IO.socket.on('showLeader',IO.showLeader);
+            IO.socket.on('showWinner',IO.showWinner);
         },
 
         /**
@@ -107,6 +120,8 @@ jQuery(function($){
          * @param data
          */
         hostCheckAnswer : function(data) {
+            console.log("hostCheckAnswer")
+            data.players = App.Host.players
             if(App.myRole === 'Host') {
                 App.Host.checkAnswer(data);
             }
@@ -118,6 +133,7 @@ jQuery(function($){
          */
         gameOver : function(data) {
             App[App.myRole].endGame(data);
+            IO.socket.emit('clientendgame');
         },
 
         /**
@@ -126,7 +142,13 @@ jQuery(function($){
          */
         error : function(data) {
             alert(data.message);
-        }
+        },
+
+        showWinner : function (txId){
+                console.log(txId)
+                $('#hostWord').append("<p><a href='https://ropsten.etherscan.io/tx/" + txId +"'>" + txId + "</a></p>")
+                App.doTextFit('#hostWord');
+            }
 
     };
 
@@ -331,7 +353,7 @@ jQuery(function($){
 
                 // Begin the on-screen countdown timer
                 var $secondsLeft = $('#hostWord');
-                App.countDown( $secondsLeft, 5, function(){
+                App.countDown( $secondsLeft, 1, function(){
                     IO.socket.emit('hostCountdownFinished', App.gameId);
                 });
 
@@ -387,10 +409,12 @@ jQuery(function($){
                         // Prepare data to send to the server
                         var data = {
                             gameId : App.gameId,
-                            round : App.currentRound
+                            round : App.currentRound,
+                            players: App.Host.players
                         }
 
                         // Notify the server to start the next round.
+                        console.log("check answer")
                         IO.socket.emit('hostNextRound',data);
 
                     } else {
@@ -433,12 +457,12 @@ jQuery(function($){
 
                 }
                 else data.done=0;
-                //console.log(data);
-                //IO.socket.emit("clientEndGame",data);
+                console.log("clientEndGame");
+                IO.socket.emit("clientEndGame",data);
                 // Reset game data
                 App.Host.numPlayersInRoom = 0;
                 App.Host.isNewGame = true;
-                IO.socket.emit('hostNextRound',data);
+                //IO.socket.emit('hostNextRound',data);
                 // Reset game data
             },
 
@@ -482,21 +506,57 @@ jQuery(function($){
              * The player entered their name and gameId (hopefully)
              * and clicked Start.
              */
+
             onPlayerStartClick: function() {
                 // console.log('Player clicked "Start"');
 
                 // collect data to send to the server
-                var data = {
+
+
+                var playerData = {
                     gameId : +($('#inputGameId').val()),
                     playerName : $('#inputPlayerName').val() || 'anon'
                 };
-
-                // Send the gameId and playerName to the server
-                IO.socket.emit('playerJoinGame', data);
-
-                // Set the appropriate properties for the current player.
                 App.myRole = 'Player';
-                App.Player.myName = data.playerName;
+                App.Player.myName = playerData.playerName;
+                quarters.authorize({
+                    success: function(data) {
+                    if (data.code) {
+                        // fetch refresh token using code
+                        $.ajax({
+                            url: '/code',
+                            method: 'POST',
+                            data: JSON.stringify({code: data.code}),
+                            contentType: 'application/json',  
+                            dataType: 'json'
+                        })
+                        .then(res => {
+                            // set refresh token
+                            window.localStorage.setItem(
+                                'refresh_token',
+                                res.refresh_token
+                            )
+                            window.localStorage.setItem(
+                                'id',
+                                res.id
+                            )
+                            playerData.id = res.id
+                            //checkLocalToken()
+                            document.querySelectorAll('.buy-quarters-button')[0].click();
+                            // Set the appropriate properties for the current player.
+
+                            window.onQuartersCallback = function(data) {
+                                if (data.txId) {
+                                    IO.socket.emit('playerJoinGame', playerData);
+                                }   
+                            }
+                        })
+                        .catch(e => {
+                            console.log(e)
+                        })
+                        }
+                    }
+                })
             },
 
             /**
@@ -513,7 +573,8 @@ jQuery(function($){
                     gameId: App.gameId,
                     playerId: App.mySocketId,
                     answer: answer,
-                    round: App.currentRound
+                    round: App.currentRound,
+                    id:  localStorage.getItem("id")
                 }
                 IO.socket.emit('playerAnswer',data);
             },
@@ -658,8 +719,8 @@ jQuery(function($){
                 }
             );
         }
-
     };
+
 
     IO.init();
     App.init();
