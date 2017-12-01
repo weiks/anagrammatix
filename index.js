@@ -40,22 +40,22 @@ app.use(
 
 //creating server if not exists
 
-var file ="mydb.db";
-var exists = fs.existsSync(file);
+//var file ="mydb.db";
+//var exists = fs.existsSync(file);
 
-if(!exists) {
-  console.log("Creating DB file.");
-  fs.openSync(file, "w");
-}
+//if(!exists) {
+//  console.log("Creating DB file.");
+//  fs.openSync(file, "w");
+//}
 
-var sqlite3 = require("sqlite3").verbose();
-var db = new sqlite3.Database(file);
+//var sqlite3 = require("sqlite3").verbose();
+//var db = new sqlite3.Database(file);
 
-db.serialize(function() {
-  if(!exists) {
-    db.run("CREATE TABLE player (player_name TEXT, player_win INT)");
-  }
-});
+//db.serialize(function() {
+//  if(!exists) {
+//    db.run("CREATE TABLE player (player_name TEXT, player_win INT)");
+//  }
+//});
 
 
 // Create a simple Express application
@@ -73,7 +73,8 @@ io.set('log level',1);
 // Listen for Socket.IO Connections. Once connected, start the game logic.
 io.sockets.on('connection', function (socket) {
     //console.log('client connected');
-    agx.initGame(io, socket,db);
+    //agx.initGame(io, socket,db);
+   agx.initGame(io, socket);
 });
 
 var jsonParser = bodyParser.json()

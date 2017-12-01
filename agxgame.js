@@ -1,6 +1,6 @@
 var io;
 var gameSocket;
-var db;
+//var db;
 
 var Quarters = require('node-quarters')
 
@@ -18,10 +18,11 @@ var quarters = new Quarters(config.quarters)
 var gameData = []
 
 
+//exports.initGame = function(sio, socket,sdb){
 exports.initGame = function(sio, socket,sdb){
     io = sio;
     gameSocket = socket;
-    db=sdb;
+    //db=sdb;
     gameSocket.emit('connected', { message: "You are connected!" });
 
     //common event
